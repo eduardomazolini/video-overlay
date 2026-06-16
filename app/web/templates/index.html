@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Video Overlay</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 520px; margin: 40px auto; padding: 0 16px; }
+    label { display: block; margin: 12px 0 4px; font-weight: 600; }
+    input, select, button { width: 100%; padding: 8px; box-sizing: border-box; }
+    button { margin-top: 20px; cursor: pointer; font-weight: 600; }
+    #status { margin-top: 20px; padding: 12px; background: #f3f3f3; border-radius: 6px; display: none; }
+    .row { display: flex; gap: 12px; }
+    .row > div { flex: 1; }
+  </style>
+</head>
+<body>
+  <h1>Processar vídeo</h1>
+  <form id="form">
+    <label>Vídeo</label>
+    <input type="file" name="video" accept="video/*" required>
+
+    <label>Rede / proporção</label>
+    <select name="preset_key">
+      {% for p in presets %}<option value="{{ p.key }}">{{ p.label }}</option>{% endfor %}
+    </select>
+
+    <label>Canto do logo</label>
+    <select name="logo_corner">
+      {% for c in corners %}<option value="{{ c.value }}">{{ c.value }}</option>{% endfor %}
+    </select>
+
+    <label>Encaixe na proporção</label>
+    <select name="fit_mode">
+      <option value="crop">Cortar (preenche o quadro, perde as pontas)</option>
+      <option value="blur">Fundo borrado (mostra o vídeo inteiro)</option>
+    </select>
+
+    <label>Posição do corte (só no modo "Cortar")</label>
+    <select name="crop_gravity">
+      <option value="center">Centro</option>
+      <option value="top">Topo</option>
+      <option value="bottom">Base</option>
+    </select>
+
+    <label>Ocultar bordas (o canto do logo é sempre mantido)</label>
+    <div id="hidden-borders">
+      {% for c in corners %}
+      <label style="font-weight:400">
+        <input type="checkbox" name="hidden_borders" value="{{ c.value }}" style="width:auto"> {{ c.value }}
+      </label>
+      {% endfor %}
+    </div>
+
+    <div class="row">
+      <div><label>Fade in das bordas (s)</label><input type="number" name="border_fade_in" value="0.5" step="0.1" min="0"></div>
+      <div><label>Fade out das bordas (s)</label><input type="number" name="border_fade_out" value="0.5" step="0.1" min="0"></div>
+    </div>
+    <small>O logo permanece visível o tempo todo (serve de thumbnail).</small>
+
+    <button type="submit">Enviar</button>
+  </form>
+
+  <div id="status"></div>
+
+  <script>
+    const form = document.getElementById('form');
+    const statusBox = document.getElementById('status');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      statusBox.style.display = 'block';
+      statusBox.textContent = 'Enviando...';
+
+      const res = await fetch('/jobs', { method: 'POST', body: new FormData(form) });
+      const { job_id } = await res.json();
+      poll(job_id);
+    });
+
+    async function poll(jobId) {
+      const res = await fetch(`/jobs/${jobId}`);
+      const data = await res.json();
+      statusBox.textContent = `Status: ${data.status}`;
+
+      if (data.status === 'SUCCESS') {
+        statusBox.innerHTML = `Pronto! <a href="/jobs/${jobId}/download">Baixar vídeo</a>`;
+      } else if (data.status === 'FAILURE') {
+        statusBox.textContent = `Erro: ${data.error || 'falha no processamento'}`;
+      } else {
+        setTimeout(() => poll(jobId), 2000);
+      }
+    }
+  </script>
+</body>
+</html>

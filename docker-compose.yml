@@ -1,0 +1,58 @@
+# Sobe tudo de uma vez:  docker compose up --build
+#
+# Os serviços web, worker e bot compartilham a MESMA imagem e os MESMOS
+# volumes (storage e assets), então o vídeo enviado pela web/bot é o mesmo
+# arquivo que o worker processa.
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  worker:
+    build: .
+    # -B embarca o Celery beat no worker (limpeza periódica). Para uso pessoal
+    # é suficiente; em produção com vários workers, rode o beat separado.
+    command: celery -A app.worker.celery_app:celery_app worker -B --loglevel=info
+    environment:
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - ./storage:/app/storage
+      - ./assets:/app/assets
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  web:
+    build: .
+    command: uvicorn app.web.main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    environment:
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - ./storage:/app/storage
+      - ./assets:/app/assets
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  bot:
+    build: .
+    command: python -m app.bot.main
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      # TELEGRAM_BOT_TOKEN vem do arquivo .env (não versionado)
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+    volumes:
+      - ./storage:/app/storage
+      - ./assets:/app/assets
+    depends_on:
+      redis:
+        condition: service_healthy
