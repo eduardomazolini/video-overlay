@@ -1,5 +1,6 @@
 # Dependências só para desenvolvimento/testes.
 -r requirements.txt
 pytest
+httpx       # necessário para o TestClient do FastAPI/Starlette
 ruff
 pre-commit
