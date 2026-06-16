@@ -1,0 +1,11 @@
+# Hooks locais de git (agnósticos de fornecedor). Instale com:
+#   pip install -r requirements-dev.txt
+#   pre-commit install
+# Rodam automaticamente a cada commit; para rodar em tudo: pre-commit run --all-files
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.17
+    hooks:
+      - id: ruff          # lint (com --fix)
+        args: [--fix]
+      - id: ruff-format   # formatação

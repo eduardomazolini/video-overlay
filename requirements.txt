@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+celery
+redis
+python-multipart
+jinja2
+pydantic
+aiogram
+python-dotenv

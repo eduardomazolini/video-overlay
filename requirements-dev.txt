@@ -1,0 +1,5 @@
+# Dependências só para desenvolvimento/testes.
+-r requirements.txt
+pytest
+ruff
+pre-commit
