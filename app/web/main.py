@@ -27,9 +27,11 @@ templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
+    # Assinatura atual do Starlette: request primeiro, depois o nome do template.
     return templates.TemplateResponse(
+        request,
         "index.html",
-        {"request": request, "presets": PRESETS.values(), "corners": list(Corner)},
+        {"presets": list(PRESETS.values()), "corners": list(Corner)},
     )
 
 
