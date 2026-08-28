@@ -7,7 +7,8 @@ processamento. O core não importa este módulo — ele recebe caminhos prontos.
 import os
 from pathlib import Path
 
-# Raiz do projeto (.../claudecode-test-alura)
+# Raiz do projeto: `app/settings.py` está em `app/`, então subimos 2 níveis
+# (app/ → raiz) para achar `.env`, `assets/` e `storage/`.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Carrega variáveis do .env (não versionado), se python-dotenv estiver
